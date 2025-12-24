@@ -1,3 +1,19 @@
+
+
+from flask import Flask
+application = Flask(__name__)
+
+@application.route("/")
+def home():
+    return "Running ✅"
+
+
+
+
+
+
+
+
 from flask import Flask,request,render_template
 import numpy as np
 import pandas as pd
