@@ -1,6 +1,3 @@
-
-
-
 import os
 import sys
 from dataclasses import dataclass
@@ -27,9 +24,6 @@ class DataTransformation:
         self.data_transformation_config = DataTransformationConfig()
 
     def get_data_transformer_object(self):
-        """
-        This function is responsible for data transformation
-        """
         try:
             numerical_columns = ["writing_score", "reading_score"]
             categorical_columns = [
@@ -47,11 +41,11 @@ class DataTransformation:
                 ]
             )
 
+            # OneHotEncoder -> sparse matrix, so scaler must be with_mean=False
             cat_pipeline = Pipeline(
                 steps=[
                     ("imputer", SimpleImputer(strategy="most_frequent")),
                     ("one_hot_encoder", OneHotEncoder(handle_unknown="ignore")),
-                    # OneHotEncoder -> sparse output, so scaler must be with_mean=False
                     ("scaler", StandardScaler(with_mean=False)),
                 ]
             )
@@ -77,8 +71,6 @@ class DataTransformation:
             test_df = pd.read_csv(test_path)
 
             logging.info("Read train and test data completed")
-            logging.info("Obtaining preprocessing object")
-
             preprocessing_obj = self.get_data_transformer_object()
 
             target_column_name = "math_score"
@@ -89,7 +81,7 @@ class DataTransformation:
             input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
             target_feature_test_df = test_df[target_column_name]
 
-            logging.info("Applying preprocessing object on training and testing dataframes")
+            logging.info("Applying preprocessing object")
 
             input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
@@ -98,13 +90,7 @@ class DataTransformation:
             test_arr = np.c_[input_feature_test_arr, np.array(target_feature_test_df)]
 
             logging.info("Saving preprocessing object")
-
-            # If your save_object signature does NOT accept obj=, use positional:
-            # save_object(self.data_transformation_config.preprocessor_obj_file_path, preprocessing_obj)
-            save_object(
-                file_path=self.data_transformation_config.preprocessor_obj_file_path,
-                obj=preprocessing_obj,
-            )
+            save_object(self.data_transformation_config.preprocessor_obj_file_path, preprocessing_obj)
 
             return (
                 train_arr,

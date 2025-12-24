@@ -1,5 +1,3 @@
-
-
 import os
 import sys
 from dataclasses import dataclass
@@ -11,9 +9,7 @@ from src.exception import CustomException
 from src.logger import logging
 
 from src.components.data_transformation import DataTransformation
-from src.components.data_transformation import DataTransformationConfig
-
-
+from src.components.model_trainer import ModelTrainer
 
 
 @dataclass
@@ -28,39 +24,35 @@ class DataIngestion:
         self.ingestion_config = DataIngestionConfig()
 
     def initiate_data_ingestion(self):
-        logging.info("Entered the data ingestion method or component")
+        logging.info("Entered the data ingestion component")
         try:
-            # Use raw string or forward slashes to avoid \d, \s issues
             df = pd.read_csv(r"notebook\data\stud.csv")
             logging.info("Read the dataset as dataframe")
 
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
 
-            # Save raw data
             df.to_csv(self.ingestion_config.raw_data_path, index=False, header=True)
 
             logging.info("Train test split initiated")
             train_set, test_set = train_test_split(df, test_size=0.2, random_state=42)
 
-            # Save train and test data (you had these swapped)
             train_set.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
             test_set.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
 
-            logging.info("Ingestion of the data is completed")
+            logging.info("Data ingestion completed")
 
-            return (
-                self.ingestion_config.train_data_path,
-                self.ingestion_config.test_data_path,
-            )
+            return self.ingestion_config.train_data_path, self.ingestion_config.test_data_path
 
         except Exception as e:
             raise CustomException(e, sys) from e
 
 
 if __name__ == "__main__":
-    obj = DataIngestion()
-    train_data,test_data=obj.initiate_data_ingestion()
+    ingestion = DataIngestion()
+    train_path, test_path = ingestion.initiate_data_ingestion()
 
+    transformation = DataTransformation()
+    train_arr, test_arr, _ = transformation.initiate_data_transformation(train_path, test_path)
 
-    data_transformation=DataTransformation()
-    data_transformation.initiate_data_transformation(train_data,test_data)
+    trainer = ModelTrainer()
+    print("Best model R2:", trainer.initiate_model_trainer(train_arr, test_arr))
